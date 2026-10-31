@@ -5,6 +5,13 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
+    ignore:
+      # 类型包要和最低支持的 Node(20)保持一致,不跟着最新大版本走
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
+      # 编译器大版本升级要单独评估,不自动提 PR
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: github-actions
     directory: /
     schedule:
