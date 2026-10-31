@@ -1,0 +1,56 @@
+{
+  "name": "vault-panel",
+  "version": "0.1.0",
+  "description": "A local web password manager: view usernames and passwords in a table, export to Excel. No cloud, zero runtime dependencies. 本机运行的账号密码管理网页:表格查看用户名和密码,可导出 Excel。",
+  "keywords": [
+    "password-manager",
+    "password",
+    "vault",
+    "self-hosted",
+    "local-first",
+    "offline",
+    "excel",
+    "xlsx",
+    "web-ui",
+    "cli"
+  ],
+  "author": "Arra",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "vault-panel": "dist/server.js"
+  },
+  "files": [
+    "dist",
+    "web",
+    "README.md",
+    "README.en.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Arras9005/vault-panel.git"
+  },
+  "homepage": "https://github.com/Arras9005/vault-panel#readme",
+  "bugs": {
+    "url": "https://github.com/Arras9005/vault-panel/issues"
+  },
+  "scripts": {
+    "start": "tsx src/server.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx src/crypto-test.ts && tsx src/vault-test.ts && tsx src/xlsx-test.ts && tsx src/csv-test.ts && tsx src/limiter-test.ts && tsx src/config-test.ts",
+    "verify": "npm run typecheck && npm run test",
+    "build": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\" && tsc -p tsconfig.build.json",
+    "prepublishOnly": "npm run verify && npm run build && npm run check:pack",
+    "check:pack": "node scripts/check-pack.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "^24.2.1",
+    "tsx": "^4.20.3",
+    "typescript": "^5.9.2"
+  }
+}

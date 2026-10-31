@@ -1,0 +1,6 @@
+分组,名称,网址,用户名,密码,备注
+服务器,测试服务器 A,ssh://192.0.2.10,deploy,Demo-Only-Passw0rd!,"示例数据,可以随意删除"
+服务器,数据库(只读),mysql://192.0.2.20:3306,readonly,Demo-Only-Passw0rd!,示例数据
+网站,示例网站后台,https://admin.example.com/login,admin@example.com,Demo-Only-Passw0rd!,示例数据
+网站,代码托管,https://git.example.com,demo-user,Demo-Only-Passw0rd!,
+邮箱,工作邮箱,https://mail.example.com,demo@example.com,Demo-Only-Passw0rd!,示例数据
