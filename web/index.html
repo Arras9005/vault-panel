@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>账号密码库</title>
+<style nonce="__NONCE__">
+  :root {
+    color-scheme: light;
+    --brand: #1f6fff;
+    --action: #1557d6;
+    --action-hover: #104bbf;
+    --on-action: #ffffff;
+    --accent: #1557d6;
+    --bg: #f4f7fb;
+    --surface: #ffffff;
+    --surface-soft: #eef3fb;
+    --zebra: #f8fbff;
+    --text: #172033;
+    --text-2: #5f7089;
+    --border: #dbe6f5;
+    --hover: #e8f0ff;
+    --focus: #1557d6;
+    --danger: #b42332;
+    --danger-bg: #fff0f1;
+    --danger-border: #efb2ba;
+    --info-bg: #edf3ff;
+    --info-border: #b7cdf5;
+    --warn-text: #8a4b00;
+    --warn-bg: #fff5df;
+    --warn-border: #e5c587;
+    --ok-text: #14764f;
+    --ok-bg: #eaf7f0;
+    --shadow: 0 4px 20px rgba(12, 45, 78, .06), 0 1px 3px rgba(12, 45, 78, .04);
+    --scrim: rgba(12, 45, 78, .45);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      color-scheme: dark;
+      --brand: #3b82f6;
+      --action: #2f6fe0;
+      --action-hover: #3d7df0;
+      --accent: #8fb8ff;
+      --bg: #0a1220;
+      --surface: #111c2e;
+      --surface-soft: #16243a;
+      --zebra: #0f1a2b;
+      --text: #e8eef7;
+      --text-2: #93a5bd;
+      --border: #243247;
+      --hover: #1a2a42;
+      --focus: #8fb8ff;
+      --danger: #ff8b96;
+      --danger-bg: #3a2029;
+      --danger-border: #74404d;
+      --info-bg: #15284a;
+      --info-border: #2c4e86;
+      --warn-text: #f0c36d;
+      --warn-bg: #35291a;
+      --warn-border: #6a5430;
+      --ok-text: #5fd3a8;
+      --ok-bg: #12302c;
+      --shadow: 0 8px 24px rgba(0, 0, 0, .35);
+      --scrim: rgba(3, 8, 16, .66);
+    }
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { height: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 14px/22px "Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", Arial, sans-serif; }
+
+  /* ---------- 控件 ---------- */
+  button { font: inherit; height: 34px; padding: 0 14px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); color: var(--text); cursor: pointer; white-space: nowrap; transition: background .15s, border-color .15s, color .15s; }
+  button:hover:not(:disabled) { color: var(--accent); border-color: var(--info-border); background: var(--info-bg); }
+  button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
+  button:disabled { cursor: not-allowed; opacity: .55; }
+  button.primary { background: var(--action); border-color: var(--action); color: var(--on-action); }
+  button.primary:hover:not(:disabled) { background: var(--action-hover); border-color: var(--action-hover); color: var(--on-action); }
+  button.danger { color: var(--danger); }
+  button.danger:hover:not(:disabled) { color: var(--danger); background: var(--danger-bg); border-color: var(--danger-border); }
+  button.mini { height: 26px; padding: 0 9px; font-size: 12px; }
+  input, select, textarea { font: inherit; width: 100%; height: 34px; padding: 0 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); color: var(--text); }
+  textarea { height: auto; padding: 6px 10px; resize: vertical; }
+  input[type=checkbox], input[type=radio] { width: auto; height: auto; }
+  label { display: grid; gap: 4px; font-size: 13px; color: var(--text-2); }
+  label.inline { display: inline-flex; align-items: center; gap: 4px; }
+
+  /* ---------- 解锁页 ---------- */
+  .gate { min-height: 100vh; display: grid; place-items: center; padding: 24px; }
+  .card { width: min(420px, 100%); background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow); padding: 28px; display: grid; gap: 14px; }
+  .card h1 { margin: 0; font-size: 22px; }
+  .card p { margin: 0; color: var(--text-2); }
+  .notice { padding: 8px 12px; border-radius: 6px; background: var(--warn-bg); border: 1px solid var(--warn-border); color: var(--warn-text); font-size: 13px; }
+  .err { margin: 0; min-height: 20px; color: var(--danger); font-size: 13px; }
+
+  /* ---------- 顶栏 ---------- */
+  #app { height: 100vh; display: flex; flex-direction: column; }
+  .top { flex: none; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 12px 24px; background: var(--surface); border-bottom: 1px solid var(--border); }
+  .top h1 { margin: 0 8px 0 0; font-size: 18px; font-weight: 600; }
+  .top .search { width: 280px; }
+  .spacer { flex: 1; }
+  .menu { position: relative; }
+  .menu summary { list-style: none; height: 34px; padding: 0 14px; display: inline-flex; align-items: center; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); cursor: pointer; user-select: none; white-space: nowrap; }
+  .menu summary::-webkit-details-marker { display: none; }
+  .menu summary:hover, .menu[open] summary { color: var(--accent); border-color: var(--info-border); background: var(--info-bg); }
+  .menu-list { position: absolute; right: 0; top: 40px; z-index: 20; min-width: 150px; display: grid; gap: 2px; padding: 6px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; box-shadow: var(--shadow); }
+  .menu-list button { height: 32px; border: 0; background: transparent; text-align: left; }
+
+  /* ---------- 分组筛选 ---------- */
+  .chips { flex: none; display: flex; gap: 8px; flex-wrap: wrap; padding: 14px 24px 0; }
+  .chip { height: 30px; padding: 0 14px; border-radius: 15px; }
+  .chip .n { margin-left: 6px; opacity: .7; font-size: 12px; }
+  .chip.active { background: var(--action); border-color: var(--action); color: var(--on-action); }
+  .chip.active:hover:not(:disabled) { background: var(--action-hover); color: var(--on-action); }
+  .chip.drop { background: var(--hover); border-color: var(--brand); border-style: dashed; color: var(--accent); }
+
+  /* ---------- 表格 ---------- */
+  main { flex: 1; min-height: 0; display: flex; padding: 14px 24px 8px; }
+  .table-wrap { position: relative; flex: 1; min-width: 0; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; box-shadow: var(--shadow); overflow: auto; }
+  table { width: 100%; min-width: 1280px; border-collapse: separate; border-spacing: 0; table-layout: fixed; }
+  .w-handle { width: 34px; }
+  .w-name { width: 13%; }
+  .w-group { width: 8%; }
+  .w-url { width: 22%; }
+  .w-user { width: 20%; }
+  .w-pass { width: 16%; }
+  .w-note { width: 13%; }
+  .w-act { width: 118px; }
+  thead th { position: sticky; top: 0; z-index: 2; background: var(--surface-soft); text-align: left; font-size: 13px; font-weight: 600; color: var(--text-2); padding: 10px 12px; border-bottom: 2px solid var(--border); white-space: nowrap; user-select: none; }
+  thead th + th, tbody td + td { border-left: 1px solid var(--border); }
+  th.sortable { cursor: pointer; }
+  th.sortable:hover { color: var(--accent); }
+  th .arrow { margin-left: 4px; font-size: 11px; }
+  tbody td { padding: 7px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  tbody tr:nth-child(even) { background: var(--zebra); }
+  tbody tr:hover { background: var(--hover); }
+  tbody tr:last-child td { border-bottom: 0; }
+  td.handle { padding: 7px 0; text-align: center; color: var(--text-2); }
+  .grip { cursor: grab; user-select: none; display: inline-block; padding: 0 6px; letter-spacing: -2px; }
+  .cell { display: flex; align-items: center; gap: 6px; min-width: 0; }
+  .cell .t { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .cell a { color: var(--accent); text-decoration: none; }
+  .cell a:hover { text-decoration: underline; }
+  .cell button { flex: none; }
+  .name { font-weight: 600; }
+  .cell .t.wrap { white-space: normal; word-break: break-all; overflow: visible; }
+  .mono { font-family: Consolas, "SFMono-Regular", Menlo, monospace; }
+  .muted { color: var(--text-2); }
+  .tag { display: inline-block; min-width: 0; max-width: 100%; padding: 0 8px; border-radius: 4px; background: var(--info-bg); border: 1px solid var(--info-border); color: var(--accent); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  td.actions .cell { gap: 4px; }
+  .empty { padding: 56px 16px; text-align: center; color: var(--text-2); }
+  footer { flex: none; padding: 4px 24px 14px; color: var(--text-2); font-size: 12px; }
+
+  /* ---------- 对话框 ---------- */
+  dialog { width: min(520px, 94vw); padding: 0; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); color: var(--text); box-shadow: var(--shadow); }
+  dialog::backdrop { background: var(--scrim); }
+  .dlg { padding: 22px 24px; display: grid; gap: 12px; }
+  .dlg h2 { margin: 0; font-size: 18px; }
+  .dlg .row { display: flex; gap: 8px; }
+  .dlg .row button { flex: none; }
+  .dlg .btns { display: flex; justify-content: flex-end; gap: 10px; margin-top: 4px; }
+  .gen { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 13px; color: var(--text-2); }
+  .gen input[type=number] { width: 64px; }
+  .scope { display: grid; gap: 6px; }
+  .glist { display: grid; gap: 6px; max-height: 280px; overflow: auto; }
+  .grow { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px; }
+  .grow .t { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  /* ---------- 提示 ---------- */
+  #toast { position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%); z-index: 50; max-width: min(560px, 92vw); padding: 10px 18px; border-radius: 8px; background: var(--ok-bg); color: var(--ok-text); border: 1px solid var(--ok-text); box-shadow: var(--shadow); }
+  #toast.error { background: var(--danger-bg); color: var(--danger); border-color: var(--danger-border); }
+  .offscreen { position: fixed; left: -9999px; top: 0; }
+  .fatal { padding: 48px 24px; text-align: center; color: var(--text-2); }
+</style>
+</head>
+<body>
+
+<!-- 设置主密码 / 解锁 -->
+<div id="gate" class="gate" hidden>
+  <form id="gate-form" class="card" autocomplete="off">
+    <h1 id="gate-title">账号密码库</h1>
+    <p id="gate-desc"></p>
+    <label>主密码<input id="gate-pw" type="password" autocomplete="current-password"></label>
+    <label id="gate-pw2-wrap">再输入一遍<input id="gate-pw2" type="password" autocomplete="new-password"></label>
+    <div id="gate-warn" class="notice" hidden>主密码不会保存在任何地方,忘记后无法找回,里面的账号也无法恢复。请牢记。</div>
+    <p id="gate-err" class="err"></p>
+    <button id="gate-btn" class="primary" type="submit">解锁</button>
+    <p id="gate-file" class="muted"></p>
+  </form>
+</div>
+
+<!-- 主界面 -->
+<div id="app" hidden>
+  <header class="top">
+    <h1>账号密码库</h1>
+    <input id="search" class="search" type="search" placeholder="搜索名称、网址、用户名、备注" autocomplete="off">
+    <span class="spacer"></span>
+    <button id="btn-add" class="primary" type="button">＋ 新增账号</button>
+    <button id="btn-reveal" type="button">显示全部密码</button>
+    <button id="btn-export" type="button">导出 Excel</button>
+    <details id="menu" class="menu">
+      <summary>更多 ▾</summary>
+      <div class="menu-list">
+        <button id="btn-import" type="button">导入 CSV</button>
+        <button id="btn-groups" type="button">管理分组</button>
+        <button id="btn-pw" type="button">修改主密码</button>
+      </div>
+    </details>
+    <button id="btn-lock" type="button">锁定</button>
+  </header>
+  <nav id="chips" class="chips"></nav>
+  <main>
+    <div class="table-wrap">
+      <table>
+        <colgroup>
+          <col class="w-handle"><col class="w-name"><col class="w-group"><col class="w-url"><col class="w-user"><col class="w-pass"><col class="w-note"><col class="w-act">
+        </colgroup>
+        <thead>
+          <tr id="head">
+            <th></th>
+            <th class="sortable" data-key="name">名称<span class="arrow"></span></th>
+            <th class="sortable" data-key="group">分组<span class="arrow"></span></th>
+            <th class="sortable" data-key="url">网址<span class="arrow"></span></th>
+            <th class="sortable" data-key="username">用户名<span class="arrow"></span></th>
+            <th>密码</th>
+            <th class="sortable" data-key="note">备注<span class="arrow"></span></th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+      <div id="empty" class="empty" hidden></div>
+    </div>
+  </main>
+  <footer id="foot"></footer>
+</div>
+
+<!-- 新增 / 编辑账号 -->
+<dialog id="dlg-entry">
+  <form id="form-entry" class="dlg" autocomplete="off">
+    <h2 id="entry-title">新增账号</h2>
+    <label>名称 *<input id="f-name" maxlength="200" required></label>
+    <label>分组<select id="f-group"></select></label>
+    <label>网址<input id="f-url" maxlength="2000" placeholder="https://"></label>
+    <label>用户名<input id="f-user" maxlength="500" autocomplete="off"></label>
+    <label>密码
+      <div class="row"><input id="f-pass" type="password" maxlength="1000" autocomplete="new-password"><button id="f-toggle" type="button">显示</button></div>
+    </label>
+    <div class="gen">
+      <span>随机生成:长度</span><input id="g-len" type="number" min="8" max="64" value="16">
+      <label class="inline"><input id="g-digit" type="checkbox" checked>数字</label>
+      <label class="inline"><input id="g-symbol" type="checkbox" checked>符号</label>
+      <button id="g-run" class="mini" type="button">生成</button>
+    </div>
+    <label>备注<textarea id="f-note" rows="3" maxlength="5000"></textarea></label>
+    <p id="entry-err" class="err"></p>
+    <div class="btns"><button id="entry-cancel" type="button">取消</button><button class="primary" type="submit">保存</button></div>
+  </form>
+</dialog>
+
+<!-- 管理分组 -->
+<dialog id="dlg-groups">
+  <div class="dlg">
+    <h2>管理分组</h2>
+    <div id="glist" class="glist"></div>
+    <form id="form-group" class="row"><input id="g-new" maxlength="40" placeholder="新分组名称" autocomplete="off"><button class="primary" type="submit">添加</button></form>
+    <p id="group-err" class="err"></p>
+    <div class="btns"><button id="groups-close" type="button">关闭</button></div>
+  </div>
+</dialog>
+
+<!-- 导出 Excel -->
+<dialog id="dlg-export">
+  <form id="form-export" class="dlg" autocomplete="off">
+    <h2>导出 Excel</h2>
+    <div id="scope" class="scope"></div>
+    <div class="notice">导出的 .xlsx 文件里是<b>明文</b>用户名和密码,任何拿到文件的人都能看到。用完请妥善保管或删除。</div>
+    <label>请再输入一次主密码确认<input id="x-pw" type="password" autocomplete="current-password"></label>
+    <p id="export-err" class="err"></p>
+    <div class="btns"><button id="export-cancel" type="button">取消</button><button id="export-go" class="primary" type="submit">导出</button></div>
+  </form>
+</dialog>
+
+<!-- 修改主密码 -->
+<dialog id="dlg-pw">
+  <form id="form-pw" class="dlg" autocomplete="off">
+    <h2>修改主密码</h2>
+    <label>当前主密码<input id="p-old" type="password" autocomplete="current-password"></label>
+    <label>新主密码(至少 8 个字符)<input id="p-new" type="password" autocomplete="new-password"></label>
+    <label>再输入一遍新主密码<input id="p-new2" type="password" autocomplete="new-password"></label>
+    <div class="notice">修改后,旧的备份文件(.bak)会被删除,因为它仍然可以用旧密码打开。</div>
+    <p id="pw-err" class="err"></p>
+    <div class="btns"><button id="pw-cancel" type="button">取消</button><button id="pw-go" class="primary" type="submit">修改</button></div>
+  </form>
+</dialog>
+
+<input id="file" class="offscreen" type="file" accept=".csv,text/csv" tabindex="-1">
+<div id="toast" hidden></div>
+
+<script nonce="__NONCE__">
+"use strict";
+
+// ---------- 小工具 ----------
+const $ = (id) => document.getElementById(id);
+
+function el(tag, attrs, ...kids) {
+  const node = document.createElement(tag);
+  for (const [key, value] of Object.entries(attrs || {})) {
+    if (value == null || value === false) continue;
+    if (key === "class") node.className = value;
+    else if (key === "text") node.textContent = value;
+    else if (key.startsWith("on")) node.addEventListener(key.slice(2), value);
+    else node.setAttribute(key, value === true ? "" : value);
+  }
+  for (const kid of kids.flat()) if (kid != null && kid !== false) node.append(kid);
+  return node;
+}
+
+const collator = new Intl.Collator("zh", { numeric: true });
+const REVEAL_MS = 20000;
+
+const state = {
+  entries: [],
+  groups: [],
+  filterGroup: null, // null = 全部,"" = 未分组,否则是分组名
+  query: "",
+  sortKey: "name",
+  sortDir: 1,
+  revealed: new Map(), // 账号 id → 密码明文,只在内存里,到时间自动清掉
+  settings: { autoLockMinutes: 10, clipboardClearSeconds: 20, vaultFile: "" },
+};
+let revealTimer = null;
+let clipboardTimer = null;
+let clipboardPending = false; // 到点想清空剪贴板却失败了(页面不在前台),等回到页面再清
+let toastTimer = null;
+let editingId = null;
+let polling = null;
+
+// ---------- 提示 ----------
+function toast(message, kind, ms) {
+  const box = $("toast");
+  box.textContent = message;
+  box.className = kind === "error" ? "error" : "";
+  box.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { box.hidden = true; }, ms || (kind === "error" ? 6000 : 3000));
+}
+
+// ---------- 接口 ----------
+class ApiError extends Error {
+  constructor(message, status, data) {
+    super(message);
+    this.status = status;
+    this.data = data;
+  }
+}
+
+async function api(path, body, opts) {
+  const options = opts || {};
+  let res;
+  try {
+    res = await fetch(path, {
+      method: body === undefined ? "GET" : "POST",
+      headers: body === undefined ? {} : { "Content-Type": "application/json" },
+      body: body === undefined ? undefined : JSON.stringify(body),
+    });
+  } catch {
+    throw new ApiError("无法连接到 vault-panel(程序可能已经关闭)", 0, {});
+  }
+  if (res.ok) return options.blob ? res.blob() : res.json();
+  const data = await res.json().catch(() => ({}));
+  if (res.status === 401) sessionLost();
+  if (res.status === 423) goLocked("保险库已锁定,请重新输入主密码");
+  throw new ApiError(data.error || `请求失败(${res.status})`, res.status, data);
+}
+
+/** 未登录(401)和已锁定(423)已经由界面处理,不再弹错误提示。 */
+function report(error) {
+  if (error instanceof ApiError && (error.status === 401 || error.status === 423)) return;
+  toast(error.message, "error");
+}
+
+function sessionLost() {
+  wipe();
+  clearInterval(polling);
+  document.body.replaceChildren(el("p", { class: "fatal", text: "会话已失效(vault-panel 可能重启过)。请使用控制台里打印的新链接重新打开。" }));
+}
+
+// ---------- 解锁 / 设置主密码 ----------
+let gateMode = "unlock";
+
+function showGate(mode, message) {
+  gateMode = mode;
+  wipe();
+  $("app").hidden = true;
+  $("gate").hidden = false;
+  const setup = mode === "setup";
+  $("gate-title").textContent = setup ? "设置主密码" : "解锁账号密码库";
+  $("gate-desc").textContent = message || (setup ? "第一次使用:请设置一个主密码来保护你的账号。" : "请输入主密码。");
+  $("gate-pw2-wrap").hidden = !setup;
+  $("gate-warn").hidden = !setup;
+  $("gate-btn").textContent = setup ? "创建保险库" : "解锁";
+  $("gate-file").textContent = state.settings.vaultFile ? `保险库文件:${state.settings.vaultFile}` : "";
+  $("gate-err").textContent = "";
+  $("gate-pw").value = "";
+  $("gate-pw2").value = "";
+  $("gate-pw").focus();
+}
+
+$("gate-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const password = $("gate-pw").value;
+  const err = $("gate-err");
+  err.textContent = "";
+  if (gateMode === "setup") {
+    if (password.length < 8) { err.textContent = "主密码至少 8 个字符"; return; }
+    if (password !== $("gate-pw2").value) { err.textContent = "两次输入的主密码不一致"; return; }
+  } else if (password === "") {
+    err.textContent = "请输入主密码";
+    return;
+  }
+  const button = $("gate-btn");
+  const label = button.textContent;
+  button.disabled = true;
+  button.textContent = "处理中…";
+  try {
+    // 创建保险库后就已经是解锁状态,不需要再解锁一遍
+    await api(gateMode === "setup" ? "/api/setup" : "/api/unlock", { password });
+    $("gate-pw").value = "";
+    $("gate-pw2").value = "";
+    await enterApp();
+  } catch (error) {
+    if (error.status !== 401) err.textContent = error.message;
+  } finally {
+    button.disabled = false;
+    button.textContent = label;
+  }
+});
+
+async function enterApp() {
+  $("gate").hidden = true;
+  $("app").hidden = false;
+  await loadEntries();
+  $("search").focus();
+  clearInterval(polling);
+  // 后台自动锁定后,界面也要跟着锁上
+  polling = setInterval(async () => {
+    if ($("app").hidden) return;
+    try {
+      const status = await api("/api/status");
+      if (!status.unlocked) goLocked("已自动锁定,请重新输入主密码");
+    } catch { /* 已在 api() 里处理 */ }
+  }, 10000);
+}
+
+function goLocked(message) {
+  if (clipboardTimer || clipboardPending) { clearTimeout(clipboardTimer); clearClipboard(); }
+  showGate("unlock", message);
+}
+
+/** 清掉界面里所有账号相关内容(锁定时调用),不留明文。 */
+function wipe() {
+  state.entries = [];
+  state.groups = [];
+  state.revealed.clear();
+  state.filterGroup = null;
+  state.query = "";
+  clearTimeout(revealTimer);
+  editingId = null;
+  $("search").value = "";
+  $("rows").replaceChildren();
+  $("chips").replaceChildren();
+  $("foot").textContent = "";
+  for (const dialog of document.querySelectorAll("dialog")) {
+    if (dialog.open) dialog.close();
+    dialog.querySelectorAll("input:not([type=checkbox]):not([type=radio]):not([type=number]), textarea").forEach((input) => { input.value = ""; });
+  }
+}
+
+// ---------- 数据 ----------
+async function loadEntries() {
+  const data = await api("/api/entries");
+  state.entries = data.entries;
+  state.groups = data.groups;
+  if (state.filterGroup !== null && state.filterGroup !== "" && !state.groups.includes(state.filterGroup)) state.filterGroup = null;
+  hideAll();
+}
+
+function visibleRows() {
+  const q = state.query.trim().toLowerCase();
+  const rows = state.entries.filter((e) => {
+    if (state.filterGroup !== null && e.group !== state.filterGroup) return false;
+    return !q || [e.name, e.group, e.url, e.username, e.note].some((v) => v.toLowerCase().includes(q));
+  });
+  const key = state.sortKey;
+  return rows.sort((a, b) => (collator.compare(a[key] || "", b[key] || "") || collator.compare(a.name, b.name)) * state.sortDir);
+}
+
+// ---------- 密码显示 / 复制 ----------
+function hideAll() {
+  state.revealed.clear();
+  clearTimeout(revealTimer);
+  render();
+}
+
+async function reveal(ids) {
+  const data = await api("/api/reveal", { ids });
+  for (const [id, password] of Object.entries(data.passwords)) state.revealed.set(id, password);
+  clearTimeout(revealTimer);
+  revealTimer = setTimeout(hideAll, REVEAL_MS);
+}
+
+async function toggleOne(entry) {
+  try {
+    if (state.revealed.has(entry.id)) {
+      state.revealed.delete(entry.id);
+    } else {
+      await reveal([entry.id]);
+    }
+    render();
+  } catch (error) { report(error); }
+}
+
+// 当前表格里只要有已显示的密码,按钮就是"隐藏";否则是"显示"
+$("btn-reveal").addEventListener("click", async () => {
+  try {
+    const rows = visibleRows();
+    if (rows.some((e) => state.revealed.has(e.id))) { hideAll(); return; }
+    await reveal(rows.filter((e) => e.hasPassword).map((e) => e.id));
+    render();
+    toast(`密码将在 ${REVEAL_MS / 1000} 秒后自动隐藏`);
+  } catch (error) { report(error); }
+});
+
+async function writeClipboard(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    const area = el("textarea", { class: "offscreen", readonly: true });
+    area.value = text;
+    document.body.append(area);
+    area.select();
+    let ok = false;
+    try { ok = document.execCommand("copy"); } catch { /* 不支持就算了 */ }
+    area.remove();
+    return ok;
+  }
+}
+
+async function clearClipboard() {
+  clipboardTimer = null;
+  clipboardPending = !(await writeClipboard(""));
+}
+
+// 复制密码后切到别的软件去粘贴,这时页面不在前台,浏览器不允许写剪贴板;回到页面时补上
+window.addEventListener("focus", () => { if (clipboardPending) clearClipboard(); });
+
+async function copyValue(text, what, sensitive) {
+  if (!(await writeClipboard(text))) { toast("复制失败,请手动选中复制", "error"); return; }
+  clearTimeout(clipboardTimer);
+  clipboardTimer = null;
+  clipboardPending = false;
+  const seconds = state.settings.clipboardClearSeconds;
+  if (sensitive && seconds > 0) {
+    clipboardTimer = setTimeout(clearClipboard, seconds * 1000);
+    toast(`已复制${what},${seconds} 秒后自动清空剪贴板`);
+  } else {
+    toast(`已复制${what}`);
+  }
+}
+
+async function copyPassword(entry) {
+  try {
+    let password = state.revealed.get(entry.id);
+    if (password === undefined) password = (await api("/api/reveal", { ids: [entry.id] })).passwords[entry.id] || "";
+    await copyValue(password, "密码", true);
+  } catch (error) { report(error); }
+}
+
+// ---------- 渲染 ----------
+function render() {
+  const rows = visibleRows();
+  renderChips();
+  renderRows(rows);
+  renderHead();
+  $("btn-reveal").textContent = rows.some((e) => state.revealed.has(e.id)) ? "隐藏全部密码" : "显示全部密码";
+  const shown = rows.length;
+  const lock = state.settings.autoLockMinutes > 0 ? `无操作 ${state.settings.autoLockMinutes} 分钟后自动锁定` : "不自动锁定";
+  $("foot").textContent = `共 ${state.entries.length} 个账号,当前显示 ${shown} 个 · ${lock} · 保险库:${state.settings.vaultFile}`;
+}
+
+function renderHead() {
+  for (const th of document.querySelectorAll("#head th.sortable")) {
+    th.querySelector(".arrow").textContent = th.dataset.key === state.sortKey ? (state.sortDir === 1 ? "▲" : "▼") : "";
+  }
+}
+
+function renderChips() {
+  const count = (group) => state.entries.filter((e) => e.group === group).length;
+  const defs = [{ label: "全部", value: null, n: state.entries.length, drop: false }];
+  for (const group of state.groups) defs.push({ label: group, value: group, n: count(group), drop: true });
+  if (state.groups.length > 0) defs.push({ label: "未分组", value: "", n: count(""), drop: true });
+  $("chips").replaceChildren(
+    ...defs.map((def) => {
+      const chip = el("button", { class: "chip" + (state.filterGroup === def.value ? " active" : ""), type: "button", title: def.drop ? "把账号行左侧的 ⋮⋮ 拖到这里可移动分组" : null },
+        def.label, el("span", { class: "n", text: String(def.n) }));
+      chip.addEventListener("click", () => { state.filterGroup = def.value; render(); });
+      if (def.drop) {
+        chip.addEventListener("dragover", (ev) => { ev.preventDefault(); chip.classList.add("drop"); });
+        chip.addEventListener("dragleave", () => chip.classList.remove("drop"));
+        chip.addEventListener("drop", async (ev) => {
+          ev.preventDefault();
+          chip.classList.remove("drop");
+          const id = ev.dataTransfer.getData("text/plain");
+          if (!id) return;
+          try {
+            await api("/api/entries/update", { id, group: def.value });
+            await loadEntries();
+          } catch (error) { report(error); }
+        });
+      }
+      return chip;
+    }),
+  );
+}
+
+function textCell(value, className) {
+  return value
+    ? el("div", { class: "cell" }, el("span", { class: "t " + (className || ""), title: value, text: value }))
+    : el("div", { class: "cell" }, el("span", { class: "t muted", text: "—" }));
+}
+
+function urlCell(value) {
+  if (!value) return textCell("");
+  const link = /^https?:\/\//i.test(value)
+    ? el("a", { href: value, target: "_blank", rel: "noopener noreferrer", title: value, text: value })
+    : el("span", { title: value, text: value });
+  return el("div", { class: "cell" }, el("span", { class: "t wrap" }, link));
+}
+
+function rowFor(entry) {
+  const password = state.revealed.get(entry.id);
+  const shown = password !== undefined;
+  const grip = el("span", { class: "grip", draggable: "true", title: "拖到上方的分组按钮可移动分组", text: "⋮⋮" });
+  const tr = el("tr");
+  grip.addEventListener("dragstart", (ev) => {
+    ev.dataTransfer.setData("text/plain", entry.id);
+    ev.dataTransfer.effectAllowed = "move";
+    ev.dataTransfer.setDragImage(tr, 10, 10);
+  });
+
+  const userCell = entry.username
+    ? el("div", { class: "cell" }, el("span", { class: "t wrap", title: entry.username, text: entry.username }),
+        el("button", { class: "mini", type: "button", text: "复制", onclick: () => copyValue(entry.username, "用户名", false) }))
+    : textCell("");
+
+  const passCell = entry.hasPassword
+    ? el("div", { class: "cell" },
+        el("span", { class: "t mono" + (shown ? " wrap" : ""), text: shown ? password : "••••••••" }),
+        el("button", { class: "mini", type: "button", text: shown ? "隐藏" : "显示", onclick: () => toggleOne(entry) }),
+        el("button", { class: "mini", type: "button", text: "复制", onclick: () => copyPassword(entry) }))
+    : textCell("");
+
+  tr.append(
+    el("td", { class: "handle" }, grip),
+    el("td", {}, el("div", { class: "cell" }, el("span", { class: "t wrap name", title: entry.name, text: entry.name }))),
+    el("td", {}, entry.group ? el("div", { class: "cell" }, el("span", { class: "tag", title: entry.group, text: entry.group })) : textCell("")),
+    el("td", {}, urlCell(entry.url)),
+    el("td", {}, userCell),
+    el("td", {}, passCell),
+    el("td", {}, textCell(entry.note.replace(/\s+/g, " "), "muted")),
+    el("td", { class: "actions" }, el("div", { class: "cell" },
+      el("button", { class: "mini", type: "button", text: "编辑", onclick: () => openEntry(entry) }),
+      el("button", { class: "mini danger", type: "button", text: "删除", onclick: () => removeEntry(entry) }))),
+  );
+  return tr;
+}
+
+function renderRows(rows) {
+  $("rows").replaceChildren(...rows.map(rowFor));
+  const empty = $("empty");
+  empty.hidden = rows.length > 0;
+  if (rows.length === 0) {
+    empty.textContent = state.entries.length === 0
+      ? "还没有账号。点击右上角「新增账号」,或用「导入 CSV」批量录入。"
+      : "没有符合条件的账号。";
+  }
+}
+
+$("head").addEventListener("click", (event) => {
+  const th = event.target.closest("th.sortable");
+  if (!th) return;
+  if (state.sortKey === th.dataset.key) state.sortDir = -state.sortDir;
+  else { state.sortKey = th.dataset.key; state.sortDir = 1; }
+  render();
+});
+
+$("search").addEventListener("input", (event) => {
+  state.query = event.target.value;
+  render();
+});
+
+// ---------- 新增 / 编辑 ----------
+function fillGroupSelect(selected) {
+  const select = $("f-group");
+  select.replaceChildren(el("option", { value: "", text: "未分组" }), ...state.groups.map((g) => el("option", { value: g, text: g })));
+  select.value = state.groups.includes(selected) ? selected : "";
+}
+
+async function openEntry(entry) {
+  editingId = entry ? entry.id : null;
+  $("entry-title").textContent = entry ? "编辑账号" : "新增账号";
+  $("entry-err").textContent = "";
+  $("f-name").value = entry ? entry.name : "";
+  // 新增时默认放进当前筛选的分组
+  fillGroupSelect(entry ? entry.group : state.filterGroup || "");
+  $("f-url").value = entry ? entry.url : "";
+  $("f-user").value = entry ? entry.username : "";
+  $("f-note").value = entry ? entry.note : "";
+  $("f-pass").value = "";
+  $("f-pass").type = "password";
+  $("f-toggle").textContent = "显示";
+  try {
+    if (entry && entry.hasPassword) $("f-pass").value = (await api("/api/reveal", { ids: [entry.id] })).passwords[entry.id] || "";
+  } catch (error) { report(error); return; }
+  $("dlg-entry").showModal();
+  $("f-name").focus();
+}
+
+$("btn-add").addEventListener("click", () => openEntry(null));
+$("entry-cancel").addEventListener("click", () => $("dlg-entry").close());
+$("dlg-entry").addEventListener("close", () => { $("f-pass").value = ""; });
+
+$("f-toggle").addEventListener("click", () => {
+  const input = $("f-pass");
+  input.type = input.type === "password" ? "text" : "password";
+  $("f-toggle").textContent = input.type === "password" ? "显示" : "隐藏";
+});
+
+function randomInt(max) {
+  const limit = Math.floor(0x100000000 / max) * max; // 拒绝采样,避免取模偏差
+  const buffer = new Uint32Array(1);
+  do { crypto.getRandomValues(buffer); } while (buffer[0] >= limit);
+  return buffer[0] % max;
+}
+
+function generatePassword(length, digits, symbols) {
+  // 去掉了容易看错的字符:l 1 I O 0
+  const sets = ["abcdefghijkmnopqrstuvwxyz", "ABCDEFGHJKLMNPQRSTUVWXYZ"];
+  if (digits) sets.push("23456789");
+  if (symbols) sets.push("!@#$%^&*()-_=+[]{};:,.?");
+  const all = sets.join("");
+  const chars = sets.map((set) => set[randomInt(set.length)]);
+  while (chars.length < length) chars.push(all[randomInt(all.length)]);
+  for (let i = chars.length - 1; i > 0; i -= 1) {
+    const j = randomInt(i + 1);
+    [chars[i], chars[j]] = [chars[j], chars[i]];
+  }
+  return chars.join("");
+}
+
+$("g-run").addEventListener("click", () => {
+  const length = Math.min(64, Math.max(8, Number($("g-len").value) || 16));
+  $("g-len").value = length;
+  $("f-pass").value = generatePassword(length, $("g-digit").checked, $("g-symbol").checked);
+  $("f-pass").type = "text";
+  $("f-toggle").textContent = "隐藏";
+});
+
+$("form-entry").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const body = {
+    name: $("f-name").value,
+    group: $("f-group").value,
+    url: $("f-url").value,
+    username: $("f-user").value,
+    password: $("f-pass").value,
+    note: $("f-note").value,
+  };
+  try {
+    if (editingId) await api("/api/entries/update", { id: editingId, ...body });
+    else await api("/api/entries", body);
+    $("dlg-entry").close();
+    await loadEntries();
+    toast("已保存");
+  } catch (error) {
+    if (error.status !== 401 && error.status !== 423) $("entry-err").textContent = error.message;
+  }
+});
+
+async function removeEntry(entry) {
+  if (!confirm(`确定删除「${entry.name}」吗?此操作不可恢复。`)) return;
+  try {
+    await api("/api/entries/delete", { id: entry.id });
+    await loadEntries();
+    toast("已删除");
+  } catch (error) { report(error); }
+}
+
+// ---------- 分组管理 ----------
+function renderGroupList() {
+  const list = $("glist");
+  if (state.groups.length === 0) {
+    list.replaceChildren(el("p", { class: "muted", text: "还没有分组。" }));
+    return;
+  }
+  list.replaceChildren(...state.groups.map((group) => {
+    const n = state.entries.filter((e) => e.group === group).length;
+    return el("div", { class: "grow" },
+      el("span", { class: "t", title: group, text: group }),
+      el("span", { class: "muted", text: `${n} 个` }),
+      el("button", { class: "mini", type: "button", text: "重命名", onclick: () => renameGroup(group) }),
+      el("button", { class: "mini danger", type: "button", text: "删除", onclick: () => deleteGroup(group, n) }));
+  }));
+}
+
+async function groupAction(path, body) {
+  $("group-err").textContent = "";
+  try {
+    await api(path, body);
+    await loadEntries();
+    renderGroupList();
+  } catch (error) {
+    if (error.status !== 401 && error.status !== 423) $("group-err").textContent = error.message;
+  }
+}
+
+function renameGroup(group) {
+  const to = prompt("新的分组名称:", group);
+  if (to === null || to.trim() === "" || to.trim() === group) return;
+  groupAction("/api/groups/rename", { from: group, to });
+}
+
+function deleteGroup(group, n) {
+  const tail = n > 0 ? `其中的 ${n} 个账号会变为「未分组」,账号本身不会删除。` : "";
+  if (!confirm(`确定删除分组「${group}」吗?${tail}`)) return;
+  groupAction("/api/groups/delete", { name: group });
+}
+
+$("btn-groups").addEventListener("click", () => {
+  $("group-err").textContent = "";
+  $("g-new").value = "";
+  renderGroupList();
+  $("dlg-groups").showModal();
+});
+$("groups-close").addEventListener("click", () => $("dlg-groups").close());
+$("form-group").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const name = $("g-new").value;
+  if (name.trim() === "") return;
+  await groupAction("/api/groups/add", { name });
+  $("g-new").value = "";
+});
+
+// ---------- 导出 Excel ----------
+function today() {
+  const d = new Date();
+  const two = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${two(d.getMonth() + 1)}-${two(d.getDate())}`;
+}
+
+$("btn-export").addEventListener("click", () => {
+  const all = state.entries.length;
+  const shown = visibleRows().length;
+  if (all === 0) { toast("还没有账号可以导出", "error"); return; }
+  const scope = $("scope");
+  scope.replaceChildren(
+    el("label", { class: "inline" }, el("input", { type: "radio", name: "x-scope", value: "all", checked: true }), `全部账号(${all} 个)`),
+    shown !== all ? el("label", { class: "inline" }, el("input", { type: "radio", name: "x-scope", value: "shown" }), `仅当前显示的账号(${shown} 个)`) : null,
+  );
+  $("x-pw").value = "";
+  $("export-err").textContent = "";
+  $("dlg-export").showModal();
+  $("x-pw").focus();
+});
+$("export-cancel").addEventListener("click", () => $("dlg-export").close());
+
+$("form-export").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const password = $("x-pw").value;
+  if (password === "") { $("export-err").textContent = "请输入主密码"; return; }
+  const picked = document.querySelector("input[name=x-scope]:checked");
+  const ids = picked && picked.value === "shown" ? visibleRows().map((e) => e.id) : undefined;
+  const button = $("export-go");
+  button.disabled = true;
+  try {
+    const blob = await api("/api/export", { password, ids }, { blob: true });
+    const link = el("a", { href: URL.createObjectURL(blob), download: `账号导出-${today()}.xlsx` });
+    document.body.append(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(link.href), 10000);
+    $("x-pw").value = "";
+    $("dlg-export").close();
+    toast("已导出。文件里是明文密码,请妥善保管", undefined, 6000);
+  } catch (error) {
+    if (error.status !== 401 && error.status !== 423) $("export-err").textContent = error.message;
+  } finally {
+    button.disabled = false;
+  }
+});
+
+// ---------- 导入 CSV ----------
+$("btn-import").addEventListener("click", () => $("file").click());
+$("file").addEventListener("change", async () => {
+  const file = $("file").files[0];
+  $("file").value = "";
+  if (!file) return;
+  try {
+    const result = await api("/api/import", { csv: await file.text() });
+    await loadEntries();
+    const skipped = result.skipped > 0 ? `,跳过 ${result.skipped} 个重复的` : "";
+    toast(`已导入 ${result.added} 个账号${skipped}。CSV 文件里是明文密码,确认无误后请删除它`, undefined, 8000);
+  } catch (error) { report(error); }
+});
+
+// ---------- 修改主密码 ----------
+$("btn-pw").addEventListener("click", () => {
+  for (const id of ["p-old", "p-new", "p-new2"]) $(id).value = "";
+  $("pw-err").textContent = "";
+  $("dlg-pw").showModal();
+  $("p-old").focus();
+});
+$("pw-cancel").addEventListener("click", () => $("dlg-pw").close());
+
+$("form-pw").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const err = $("pw-err");
+  const next = $("p-new").value;
+  if (next.length < 8) { err.textContent = "新主密码至少 8 个字符"; return; }
+  if (next !== $("p-new2").value) { err.textContent = "两次输入的新主密码不一致"; return; }
+  const button = $("pw-go");
+  button.disabled = true;
+  try {
+    await api("/api/change-password", { oldPassword: $("p-old").value, newPassword: next });
+    $("dlg-pw").close();
+    for (const id of ["p-old", "p-new", "p-new2"]) $(id).value = "";
+    toast("主密码已修改");
+  } catch (error) {
+    if (error.status !== 401 && error.status !== 423) err.textContent = error.message;
+  } finally {
+    button.disabled = false;
+  }
+});
+
+// ---------- 锁定 ----------
+$("btn-lock").addEventListener("click", async () => {
+  try { await api("/api/lock", {}); } catch { /* 即使失败也先锁住界面 */ }
+  goLocked("已锁定。");
+});
+
+// ---------- 活动上报 ----------
+// 自动锁定按"没有任何操作"计时。浏览表格、在编辑框里打字都不会调接口,所以这里定期告诉服务端用户还在。
+let lastPing = 0;
+function ping() {
+  if ($("app").hidden || state.settings.autoLockMinutes === 0) return;
+  const now = Date.now();
+  if (now - lastPing < 30000) return;
+  lastPing = now;
+  api("/api/touch", {}).catch(() => {});
+}
+for (const type of ["pointerdown", "pointermove", "keydown", "wheel"]) document.addEventListener(type, ping, { passive: true });
+
+// ---------- 「更多」菜单与快捷键 ----------
+document.addEventListener("click", (event) => {
+  const menu = $("menu");
+  if (menu.open && (!menu.contains(event.target) || event.target.closest(".menu-list button"))) menu.open = false;
+});
+
+document.addEventListener("keydown", (event) => {
+  if ($("app").hidden || document.querySelector("dialog[open]")) return;
+  const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName);
+  if (event.key === "/" && !typing) { event.preventDefault(); $("search").focus(); }
+  else if (event.key === "Escape" && document.activeElement === $("search")) { $("search").value = ""; state.query = ""; $("search").blur(); render(); }
+});
+
+// ---------- 启动 ----------
+(async function boot() {
+  try {
+    const status = await api("/api/status");
+    state.settings = status;
+    if (status.unlocked) await enterApp();
+    else showGate(status.exists ? "unlock" : "setup");
+  } catch (error) {
+    if (error.status !== 401) document.body.replaceChildren(el("p", { class: "fatal", text: error.message }));
+  }
+})();
+</script>
+</body>
+</html>
